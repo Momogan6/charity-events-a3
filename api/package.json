@@ -1,0 +1,30 @@
+{
+  "name": "charity-events-api",
+  "version": "1.0.0",
+  "description": "PROG2002 Assessment 3 - RESTful API for the Charity Events case study (Node.js + Express + MySQL).",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "express",
+    "mysql",
+    "rest",
+    "charity-events",
+    "PROG2002"
+  ],
+  "author": "PROG2002 A3 Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.12.0"
+  }
+}
