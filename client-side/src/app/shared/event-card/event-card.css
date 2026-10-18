@@ -1,0 +1,12 @@
+/* The card base styles live in the global stylesheet so that every card
+   on the site stays identical. Only the action row is card-specific. */
+
+.event-card-actions {
+  display: flex;
+  gap: .5rem;
+  padding: 0 1.1rem 1.1rem;
+}
+
+.event-card-actions .btn {
+  flex: 1 1 auto;
+}

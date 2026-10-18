@@ -1,0 +1,96 @@
+<div class="page">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">About us</span>
+    </nav>
+
+    <div class="page-header">
+      <h1>About the platform</h1>
+      <p>
+        Charity Events is a complete dynamic website built for PROG2002 Web Development II
+        (Assessment 3). The client website you are reading and the separate admin website are both
+        Angular 22 single-page applications that read and write all of their data through a RESTful
+        API backed by MySQL.
+      </p>
+    </div>
+
+    <div class="grid grid-two">
+      <section class="panel">
+        <div class="panel-head">&#127959; Architecture</div>
+        <div class="panel-body">
+          <ol style="padding-left: 1.2rem; margin: 0">
+            <li><strong>Angular 22 client website</strong> — this site. Standalone components, signals, reactive forms, routing.</li>
+            <li><strong>Angular 22 admin website</strong> — a separate application for staff to manage events.</li>
+            <li><strong>Node.js + Express REST API</strong> — the only component that talks to the database.</li>
+            <li><strong>MySQL database</strong> — <code>charityevents_db</code>, with three related tables and views.</li>
+            <li><strong>Open-Meteo Weather API</strong> — external data, proxied through our own endpoint.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">&#128202; Live figures</div>
+        <div class="panel-body">
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-value">{{ totalEvents() }}</div>
+              <div class="stat-label">Events in the database</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">{{ categories().length }}</div>
+              <div class="stat-label">Categories</div>
+            </div>
+          </div>
+          <p class="text-small text-muted" style="margin: 1rem 0 0">
+            These numbers come from <code>GET /api/events</code> and <code>GET /api/categories</code>
+            every time the page is opened — nothing on this website is a static page.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top: 1.5rem">
+      <div class="panel-head">&#128268; REST API endpoints used by this website</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Method</th>
+              <th scope="col">Endpoint</th>
+              <th scope="col">Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (endpoint of endpoints; track endpoint.method + endpoint.path) {
+              <tr>
+                <td><span class="method" [class]="'method method-' + endpoint.method.toLowerCase()">{{ endpoint.method }}</span></td>
+                <td><code>{{ endpoint.path }}</code></td>
+                <td>{{ endpoint.description }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 1.5rem">
+      <div class="panel-head">&#128101; How registration works</div>
+      <div class="panel-body">
+        <p>
+          A visitor searches for an event, opens its detail page, and clicks
+          <strong>Register for this event</strong>. The registration page collects their details and
+          sends them to <code>POST /api/registrations</code>. The API validates every field, checks the
+          event is still active and that enough seats remain, then inserts the row. The
+          <code>UNIQUE (event_id, email)</code> index guarantees nobody can register twice for the same
+          event, and a database trigger stops the event from being over-booked.
+        </p>
+        <div class="row">
+          <a class="btn" routerLink="/events">Browse events</a>
+          <a class="btn btn-secondary" routerLink="/">Back to home</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

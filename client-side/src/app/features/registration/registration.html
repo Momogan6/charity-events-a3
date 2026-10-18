@@ -1,0 +1,336 @@
+<div class="page">
+  <div class="container">
+
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <a routerLink="/events">Find events</a>
+      <span aria-hidden="true">/</span>
+      @if (event(); as e) {
+        <a [routerLink]="['/events', e.event_id]">{{ e.event_name }}</a>
+        <span aria-hidden="true">/</span>
+      }
+      <span aria-current="page">Register</span>
+    </nav>
+
+    <!-- ================= confirmation ================= -->
+    @if (confirmed(); as booking) {
+      <section class="panel confirmation-panel" role="status">
+        <div class="panel-body">
+          <div class="confirmation-mark" aria-hidden="true">&#10003;</div>
+          <h1>Registration confirmed</h1>
+          <p class="lead">
+            Thank you, {{ booking.full_name }}. Your place has been booked and the registration
+            has been saved in our database through the Charity Events API.
+          </p>
+
+          <dl class="receipt">
+            <div>
+              <dt>Registration reference</dt>
+              <dd>#{{ booking.registration_id }}</dd>
+            </div>
+            <div>
+              <dt>Event</dt>
+              <dd>{{ event()?.event_name }}</dd>
+            </div>
+            <div>
+              <dt>Event date</dt>
+              <dd>{{ fmtDate(event()?.event_date) }}</dd>
+            </div>
+            <div>
+              <dt>Tickets</dt>
+              <dd>{{ booking.tickets_purchased }}</dd>
+            </div>
+            <div>
+              <dt>Total paid</dt>
+              <dd>{{ fmtMoney(booking.total_amount) }}</dd>
+            </div>
+            <div>
+              <dt>Registered on</dt>
+              <dd>{{ fmtDate(booking.registration_date) }}</dd>
+            </div>
+            <div>
+              <dt>Confirmation sent to</dt>
+              <dd>{{ booking.email }}</dd>
+            </div>
+            <div>
+              <dt>Contact number</dt>
+              <dd>{{ booking.phone }}</dd>
+            </div>
+          </dl>
+
+          @if (booking.notes) {
+            <div class="alert alert-info">
+              <span class="alert-icon" aria-hidden="true">&#9432;</span>
+              <span><strong>Your note:</strong> {{ booking.notes }}</span>
+            </div>
+          }
+
+          <div class="confirmation-actions">
+            <button class="btn" type="button" (click)="registerAnother()">Register for another place</button>
+            <button class="btn btn-secondary" type="button" (click)="goToEvent()">View the event page</button>
+            <button class="btn btn-ghost" type="button" (click)="goHome()">Return to home</button>
+          </div>
+        </div>
+      </section>
+    } @else {
+
+      <!-- ================= load problems ================= -->
+      @if (loadingEvent()) {
+        <div class="loading-block">
+          <div class="spinner" role="status" aria-label="Loading event"></div>
+          <p>Loading the selected event…</p>
+        </div>
+      } @else if (loadError()) {
+        <div class="alert alert-error" role="alert">
+          <span class="alert-icon" aria-hidden="true">&#9888;</span>
+          <div>
+            <strong>We can't show the registration form</strong>
+            <p class="mb-0">{{ loadError() }}</p>
+            <a class="btn btn-secondary btn-sm" style="margin-top: .6rem" routerLink="/events">Choose an event</a>
+          </div>
+        </div>
+      } @else if (event(); as e) {
+
+        <div class="page-header">
+          <h1>Register for an event</h1>
+          <p>Complete the form below to reserve your place. Fields marked with * are required.</p>
+        </div>
+
+        <div class="grid grid-detail">
+          <!-- ================= the form ================= -->
+          <section class="panel">
+            <div class="panel-head">&#128221; Your registration details</div>
+            <div class="panel-body">
+
+              <!-- client-side validation alert -->
+              @if (showValidationAlert()) {
+                <div class="alert alert-error" role="alert">
+                  <span class="alert-icon" aria-hidden="true">&#9888;</span>
+                  <div>
+                    <strong>Please fix the following before submitting:</strong>
+                    <ul>
+                      @for (label of invalidFieldLabels(); track label) {
+                        <li>{{ label }}</li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              }
+
+              <!-- server-side rejection (409 / 400) -->
+              @if (serverError()) {
+                <div class="alert alert-error" role="alert">
+                  <span class="alert-icon" aria-hidden="true">&#10060;</span>
+                  <div>
+                    <strong>The API rejected this registration</strong>
+                    <p class="mb-0">{{ serverError() }}</p>
+                  </div>
+                </div>
+              }
+
+              <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+                <fieldset>
+                  <legend>Your details</legend>
+                  <div class="form-grid">
+                    <div class="field field-full">
+                      <label for="r-name">Full name <span class="required-mark">*</span></label>
+                      <input
+                        id="r-name"
+                        type="text"
+                        formControlName="full_name"
+                        autocomplete="name"
+                        placeholder="e.g. Nehemia Sugianto"
+                        [attr.aria-invalid]="showError('full_name') ? 'true' : null"
+                        [attr.aria-describedby]="showError('full_name') ? 'r-name-error' : null" />
+                      @if (showError('full_name')) {
+                        <span class="field-error" id="r-name-error" role="alert">{{ errorFor('full_name') }}</span>
+                      }
+                    </div>
+
+                    <div class="field">
+                      <label for="r-email">Email address <span class="required-mark">*</span></label>
+                      <input
+                        id="r-email"
+                        type="email"
+                        formControlName="email"
+                        autocomplete="email"
+                        placeholder="you@example.com"
+                        [attr.aria-invalid]="showError('email') ? 'true' : null" />
+                      @if (showError('email')) {
+                        <span class="field-error" role="alert">{{ errorFor('email') }}</span>
+                      } @else {
+                        <span class="field-hint">One registration per email address, per event.</span>
+                      }
+                    </div>
+
+                    <div class="field">
+                      <label for="r-phone">Contact number <span class="required-mark">*</span></label>
+                      <input
+                        id="r-phone"
+                        type="tel"
+                        formControlName="phone"
+                        autocomplete="tel"
+                        placeholder="0400 000 000"
+                        [attr.aria-invalid]="showError('phone') ? 'true' : null" />
+                      @if (showError('phone')) {
+                        <span class="field-error" role="alert">{{ errorFor('phone') }}</span>
+                      }
+                    </div>
+                  </div>
+                </fieldset>
+
+                <fieldset style="margin-top: 1.1rem">
+                  <legend>Booking</legend>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="r-tickets">Number of tickets <span class="required-mark">*</span></label>
+                      <input
+                        id="r-tickets"
+                        type="number"
+                        min="1"
+                        [attr.max]="maxTickets()"
+                        formControlName="tickets_purchased"
+                        [attr.aria-invalid]="showError('tickets_purchased') ? 'true' : null" />
+                      @if (showError('tickets_purchased')) {
+                        <span class="field-error" role="alert">{{ errorFor('tickets_purchased') }}</span>
+                      } @else {
+                        <span class="field-hint">
+                          {{ unitsAvailable() }} seat(s) remaining &middot; maximum {{ maxTickets() }} per booking.
+                        </span>
+                      }
+                    </div>
+
+                    <div class="field">
+                      <label for="r-date">Date of registration</label>
+                      <input
+                        id="r-date"
+                        type="date"
+                        [attr.max]="today"
+                        formControlName="registration_date"
+                        [attr.aria-invalid]="showError('registration_date') ? 'true' : null" />
+                      @if (showError('registration_date')) {
+                        <span class="field-error" role="alert">{{ errorFor('registration_date') }}</span>
+                      }
+                    </div>
+
+                    <div class="field field-full">
+                      <label for="r-notes">Notes <span class="label-optional">(optional)</span></label>
+                      <textarea
+                        id="r-notes"
+                        formControlName="notes"
+                        maxlength="255"
+                        placeholder="Accessibility requirements, dietary needs, team name…"
+                        [attr.aria-invalid]="showError('notes') ? 'true' : null"></textarea>
+                      @if (showError('notes')) {
+                        <span class="field-error" role="alert">{{ errorFor('notes') }}</span>
+                      }
+                    </div>
+
+                    <div class="field field-full">
+                      <div class="checkbox-row">
+                        <input
+                          id="r-terms"
+                          type="checkbox"
+                          formControlName="acceptTerms"
+                          [attr.aria-invalid]="showError('acceptTerms') ? 'true' : null" />
+                        <label for="r-terms">
+                          I confirm the details above are correct and I agree to the event's terms and
+                          conditions. <span class="required-mark">*</span>
+                        </label>
+                      </div>
+                      @if (showError('acceptTerms')) {
+                        <span class="field-error" role="alert">{{ errorFor('acceptTerms') }}</span>
+                      }
+                    </div>
+                  </div>
+                </fieldset>
+
+                <div class="basket">
+                  <span>{{ ticketCount() }} ticket(s) &times; {{ fmtPrice(e.ticket_price) }}</span>
+                  <strong>{{ fmtMoney(estimatedTotal()) }}</strong>
+                </div>
+
+                <div class="form-actions">
+                  <button class="btn btn-accent btn-lg" type="submit" [disabled]="submitting()">
+                    @if (submitting()) { Submitting… } @else { Finalise registration }
+                  </button>
+                  <a class="btn btn-secondary btn-lg" [routerLink]="['/events', e.event_id]">Cancel</a>
+                </div>
+
+                <p class="text-small text-muted" style="margin: .9rem 0 0">
+                  Submitting sends a <code>POST /api/registrations</code> request. The API re-validates
+                  every field and enforces the "one registration per email, per event" rule before the
+                  row is inserted into MySQL.
+                </p>
+              </form>
+            </div>
+          </section>
+
+          <!-- ================= selected event summary ================= -->
+          <aside class="stack-lg">
+            <section class="panel">
+              <div class="panel-head">&#127917; You are registering for</div>
+              <div class="panel-body">
+                <div class="row" style="gap: .5rem; margin-bottom: .6rem">
+                  <span class="badge badge-category">{{ e.category_name }}</span>
+                  <span class="badge badge-active">{{ e.event_status }}</span>
+                </div>
+
+                <h3>{{ e.event_name }}</h3>
+                <p class="text-small text-muted">
+                  {{ e.event_description || 'Details for this event are being finalised.' }}
+                </p>
+
+                <dl class="fact-grid" style="grid-template-columns: 1fr 1fr">
+                  <div>
+                    <dt>Date</dt>
+                    <dd>{{ fmtDate(e.event_date) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Time</dt>
+                    <dd>{{ fmtTime(e.event_time) || 'TBC' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Venue</dt>
+                    <dd>{{ e.event_venue || 'TBC' }}</dd>
+                  </div>
+                  <div>
+                    <dt>City</dt>
+                    <dd>{{ e.event_city || '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Ticket price</dt>
+                    <dd>{{ fmtPrice(e.ticket_price) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Seats left</dt>
+                    <dd>{{ unitsAvailable() }}</dd>
+                  </div>
+                </dl>
+
+                <hr class="divider" />
+                <p class="text-small text-muted mb-0">
+                  Event data is loaded live from <code>GET /api/events/{{ e.event_id }}</code> —
+                  it is not stored in the page.
+                </p>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">&#9989; Already registered?</div>
+              <div class="panel-body">
+                <p class="text-small text-muted mb-0">
+                  {{ e.registration_count }} registration(s) have already been recorded for this event,
+                  booking {{ e.tickets_sold }} of {{ e.event_capacity }} seats.
+                  The full list is shown on the
+                  <a [routerLink]="['/events', e.event_id]">event detail page</a>.
+                </p>
+              </div>
+            </section>
+          </aside>
+        </div>
+      }
+    }
+  </div>
+</div>

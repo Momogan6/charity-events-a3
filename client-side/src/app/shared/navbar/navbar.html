@@ -1,0 +1,17 @@
+<header class="site-header">
+  <div class="container">
+    <a class="brand" routerLink="/">
+      <span class="brand-mark" aria-hidden="true">&#10084;</span>
+      <span>Charity Events</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Main navigation">
+      @for (link of links; track link.path) {
+        <a
+          [routerLink]="link.path"
+          [routerLinkActiveOptions]="{ exact: link.exact }"
+          routerLinkActive="active">{{ link.label }}</a>
+      }
+    </nav>
+  </div>
+</header>

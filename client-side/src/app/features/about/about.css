@@ -1,0 +1,26 @@
+/* About page specific rules. */
+
+.method {
+  display: inline-block;
+  min-width: 4.2rem;
+  text-align: center;
+  padding: .14rem .5rem;
+  border-radius: 5px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  background: var(--c-bg-alt);
+  color: var(--c-ink-soft);
+}
+
+.method-get    { background: var(--c-info-bg);    color: var(--c-info); }
+.method-post   { background: var(--c-success-bg); color: var(--c-success); }
+.method-put    { background: var(--c-warning-bg); color: var(--c-warning); }
+.method-delete { background: var(--c-danger-bg);  color: var(--c-danger); }
+
+code {
+  background: var(--c-bg-alt);
+  padding: .1rem .3rem;
+  border-radius: 4px;
+  font-size: .84em;
+}

@@ -1,0 +1,110 @@
+/* Registration page specific rules. */
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.25rem;
+}
+
+.basket {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: .85rem 1.1rem;
+  border: 1px dashed var(--c-primary);
+  border-radius: var(--radius);
+  background: var(--c-primary-light);
+  color: var(--c-primary-dark);
+  font-weight: 600;
+}
+
+.basket strong { font-size: 1.2rem; }
+
+/* ---------- confirmation ---------- */
+.confirmation-panel {
+  border-color: #86efac;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.confirmation-mark {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--c-success-bg);
+  color: var(--c-success);
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.confirmation-panel h1 { color: var(--c-success); }
+
+.confirmation-panel .lead {
+  color: var(--c-ink-soft);
+  max-width: 62ch;
+}
+
+.receipt {
+  display: grid;
+  gap: 1rem 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  background: var(--c-bg-alt);
+}
+
+.receipt dt {
+  font-size: .74rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--c-muted);
+  font-weight: 700;
+  margin-bottom: .15rem;
+}
+
+.receipt dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+.fact-grid {
+  display: grid;
+  gap: .9rem 1.2rem;
+  margin: 1rem 0 0;
+}
+
+.fact-grid dt {
+  font-size: .74rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--c-muted);
+  font-weight: 700;
+  margin-bottom: .1rem;
+}
+
+.fact-grid dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: .92rem;
+}
+
+code {
+  background: var(--c-bg-alt);
+  padding: .1rem .3rem;
+  border-radius: 4px;
+  font-size: .82em;
+}

@@ -1,0 +1,234 @@
+<div class="page">
+  <div class="container">
+
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <a routerLink="/events">Find events</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{{ event()?.event_name || 'Event details' }}</span>
+    </nav>
+
+    @if (loading()) {
+      <div class="loading-block">
+        <div class="spinner" role="status" aria-label="Loading event"></div>
+        <p>Loading event details…</p>
+      </div>
+    } @else if (notFound()) {
+      <div class="empty-state">
+        <h3>Event not found</h3>
+        <p>That event does not exist, or it may have been removed by an administrator.</p>
+        <a class="btn" routerLink="/events">Back to all events</a>
+      </div>
+    } @else if (errorMessage()) {
+      <div class="alert alert-error" role="alert">
+        <span class="alert-icon" aria-hidden="true">&#9888;</span>
+        <div>
+          <strong>We couldn't load this event</strong>
+          <p class="mb-0">{{ errorMessage() }}</p>
+        </div>
+      </div>
+    } @else if (event(); as e) {
+
+      <!-- ================= event header ================= -->
+      <header class="detail-hero">
+        <div class="row-between">
+          <div>
+            <div class="row" style="gap: .5rem; margin-bottom: .6rem">
+              <span class="badge badge-category">{{ e.category_name }}</span>
+              <span [class]="statusClass()">{{ e.event_status }}</span>
+              @if (e.ticket_price > 0) {
+                <span class="badge">{{ fmtPrice(e.ticket_price) }} per ticket</span>
+              } @else {
+                <span class="badge badge-free">Free entry</span>
+              }
+            </div>
+            <h1>{{ e.event_name }}</h1>
+          </div>
+        </div>
+
+        <p class="detail-lead">
+          {{ e.event_description || 'Full details for this charity event will be published shortly.' }}
+        </p>
+      </header>
+
+      <div class="grid grid-detail" style="margin-top: 1.75rem">
+        <!-- ================= left column ================= -->
+        <div class="stack-lg">
+
+          <!-- event facts -->
+          <section class="panel">
+            <div class="panel-head">&#128203; Event information</div>
+            <div class="panel-body">
+              <dl class="fact-grid">
+                <div>
+                  <dt>Date</dt>
+                  <dd>{{ fmtDate(e.event_date) }}</dd>
+                </div>
+                <div>
+                  <dt>Start time</dt>
+                  <dd>{{ fmtTime(e.event_time) || 'To be confirmed' }}</dd>
+                </div>
+                <div>
+                  <dt>Venue</dt>
+                  <dd>{{ e.event_venue || 'To be confirmed' }}</dd>
+                </div>
+                <div>
+                  <dt>City</dt>
+                  <dd>{{ e.event_city || '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Ticket price</dt>
+                  <dd>{{ fmtPrice(e.ticket_price) }}</dd>
+                </div>
+                <div>
+                  <dt>Event ID</dt>
+                  <dd>#{{ e.event_id }}</dd>
+                </div>
+              </dl>
+
+              <hr class="divider" />
+
+              <div class="stack" style="gap: .45rem">
+                <div class="row-between">
+                  <strong>{{ e.tickets_sold }} of {{ e.event_capacity }} seats booked</strong>
+                  <span class="text-small text-muted">{{ e.seats_remaining }} remaining</span>
+                </div>
+                <div class="meter" role="img" [attr.aria-label]="progress() + '% of seats booked'">
+                  <span [style.width.%]="progress()"></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- registration list (A3 requirement) -->
+          <section class="panel" id="registrations">
+            <div class="panel-head row-between">
+              <span>&#128101; Registrations for this event ({{ registrations().length }})</span>
+              <span class="text-small text-muted">{{ totalTickets() }} tickets &middot; {{ fmtMoney(revenue()) }}</span>
+            </div>
+
+            @if (registrations().length === 0) {
+              <div class="panel-body">
+                <div class="empty-state" style="padding: 2rem 1rem">
+                  <h3>No one has registered yet</h3>
+                  <p class="mb-0">Be the first to support this cause — the registration list will appear here.</p>
+                </div>
+              </div>
+            } @else {
+              <div class="table-wrap">
+                <table>
+                  <caption class="visually-hidden">
+                    Registrations for {{ e.event_name }}, most recent first
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Registered</th>
+                      <th scope="col">Name</th>
+                      <th scope="col">Contact</th>
+                      <th scope="col" class="num">Tickets</th>
+                      <th scope="col" class="num">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (registration of registrations(); track registration.registration_id) {
+                      <tr>
+                        <td class="text-muted">{{ registration.registration_id }}</td>
+                        <td>{{ fmtDateTime(registration.registration_date) }}</td>
+                        <td class="cell-strong">{{ registration.full_name }}</td>
+                        <td>
+                          <span class="contact-line">{{ registration.email }}</span>
+                          <span class="contact-line text-muted">{{ registration.phone }}</span>
+                        </td>
+                        <td class="num">{{ registration.tickets_purchased }}</td>
+                        <td class="num">{{ fmtMoney(registration.total_amount) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="panel-foot">
+                Sorted by the date the tickets were purchased (newest first) — ordering is
+                performed by MySQL via <code>ORDER BY registration_date DESC</code>.
+              </div>
+            }
+          </section>
+        </div>
+
+        <!-- ================= right column ================= -->
+        <aside class="stack-lg">
+
+          <!-- register call to action -->
+          <section class="panel cta-panel">
+            <div class="panel-body">
+              <h3>Ready to join?</h3>
+              <p class="text-small text-muted">
+                Secure your place at {{ e.event_name }}. Registration takes less than a minute.
+              </p>
+
+              @if (canRegister()) {
+                <button class="btn btn-accent btn-lg btn-block" type="button" (click)="goToRegistration()">
+                  Register for this event
+                </button>
+                <p class="text-small text-muted" style="margin: .75rem 0 0">
+                  {{ e.seats_remaining }} seat(s) still available.
+                </p>
+              } @else {
+                <button class="btn btn-lg btn-block" type="button" disabled>Registration closed</button>
+                <div class="alert alert-warning" style="margin-top: .8rem" role="status">
+                  <span class="alert-icon" aria-hidden="true">&#9432;</span>
+                  <span>{{ registerBlockedReason() }}</span>
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- weather (external API bonus) -->
+          <section class="panel">
+            <div class="panel-head">&#9728; Event-day forecast</div>
+            <div class="panel-body">
+              @if (weatherError()) {
+                <p class="text-small text-muted mb-0">{{ weatherError() }}</p>
+              } @else if (!weather()) {
+                <div class="loading-block" style="padding: 1rem 0">
+                  <div class="spinner" role="status" aria-label="Loading forecast"></div>
+                </div>
+              } @else {
+                <p class="text-small text-muted">
+                  {{ weather()!.location.label }} &middot; {{ weather()!.location.latitude }},
+                  {{ weather()!.location.longitude }}
+                </p>
+                <div class="stack" style="gap: .5rem">
+                  @for (day of weather()!.forecast; track day.date) {
+                    <div class="weather-row">
+                      <span class="weather-row-day">{{ day.day }}</span>
+                      <span class="weather-row-desc">{{ day.description }}</span>
+                      <span class="weather-row-temp">{{ day.tempMax }}&deg; / {{ day.tempMin }}&deg;</span>
+                    </div>
+                  }
+                </div>
+                <p class="text-small text-muted mb-0" style="margin-top: .8rem">
+                  Live data from {{ weather()!.source }}
+                </p>
+              }
+            </div>
+          </section>
+
+          <!-- quick links -->
+          <section class="panel">
+            <div class="panel-head">&#128279; Quick links</div>
+            <div class="panel-body stack" style="gap: .5rem">
+              <a class="btn btn-secondary btn-block" routerLink="/events">Browse more events</a>
+              <a class="btn btn-secondary btn-block" [routerLink]="['/events']"
+                 [queryParams]="{ categoryId: e.category_id }">
+                More in {{ e.category_name }}
+              </a>
+              <a class="btn btn-ghost btn-block" href="#registrations">Jump to registrations</a>
+            </div>
+          </section>
+        </aside>
+      </div>
+    }
+  </div>
+</div>

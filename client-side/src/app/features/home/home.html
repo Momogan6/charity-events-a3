@@ -1,0 +1,170 @@
+<section class="hero">
+  <div class="container">
+    <h1>Find a cause worth showing up for</h1>
+    <p>
+      Browse charity events across the Northern Rivers and register in seconds.
+      Every ticket you purchase goes straight to a local fundraising partner.
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn btn-accent btn-lg" routerLink="/events">Browse all events</a>
+      <a class="btn btn-secondary btn-lg" routerLink="/about">How it works</a>
+    </div>
+
+    <div class="hero-search">
+      <form [formGroup]="quickSearchForm" (ngSubmit)="onQuickSearch()" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="home-search">Looking for</label>
+            <input
+              id="home-search"
+              type="search"
+              formControlName="search"
+              placeholder="e.g. fun run, book drive, concert"
+              [attr.aria-invalid]="quickSearchError() ? 'true' : null" />
+            @if (quickSearchError()) {
+              <span class="field-error" role="alert">{{ quickSearchError() }}</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="home-category">Category</label>
+            <select id="home-category" formControlName="categoryId">
+              <option value="">All categories</option>
+              @for (category of categories(); track category.category_id) {
+                <option [value]="category.category_id">{{ category.category_name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="home-go">&nbsp;</label>
+            <button id="home-go" class="btn btn-lg" type="submit">&#128269; Search</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div class="page">
+  <div class="container stack-lg">
+
+    @if (errorMessage()) {
+      <div class="alert alert-error" role="alert">
+        <span class="alert-icon" aria-hidden="true">&#9888;</span>
+        <div>
+          <strong>We couldn't load the events</strong>
+          <p class="mb-0">{{ errorMessage() }}</p>
+          <button type="button" class="btn btn-secondary btn-sm" style="margin-top: .6rem" (click)="retry()">
+            Try again
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ---------------- impact statistics ---------------- -->
+    <section class="stats" aria-label="Platform statistics">
+      <div class="stat">
+        <div class="stat-value">{{ totalEvents() }}</div>
+        <div class="stat-label">Events open now</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{{ categories().length }}</div>
+        <div class="stat-label">Cause categories</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{{ totalTickets() }}</div>
+        <div class="stat-label">Tickets booked</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">{{ nextEventDate() ? 'Live' : '—' }}</div>
+        <div class="stat-label">Next event {{ nextEventDate() ?? 'to be announced' }}</div>
+      </div>
+    </section>
+
+    <!-- ---------------- upcoming events ---------------- -->
+    <section>
+      <div class="row-between" style="margin-bottom: 1.1rem">
+        <div>
+          <h2 class="mb-0">Upcoming events</h2>
+          <p class="text-muted mb-0">Retrieved live from our Charity Events API.</p>
+        </div>
+        <a class="btn btn-secondary" routerLink="/events">View all &rarr;</a>
+      </div>
+
+      @if (loading()) {
+        <div class="loading-block">
+          <div class="spinner" role="status" aria-label="Loading events"></div>
+          <p>Loading events…</p>
+        </div>
+      } @else if (upcoming().length === 0) {
+        <div class="empty-state">
+          <h3>No events are open for registration yet</h3>
+          <p>Please check back soon — new charity events are added regularly.</p>
+        </div>
+      } @else {
+        <div class="grid grid-auto">
+          @for (event of upcoming(); track event.event_id) {
+            <app-event-card [event]="event" />
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ---------------- weather + about ---------------- -->
+    <section class="grid grid-two">
+      <div class="panel">
+        <div class="panel-head">&#9728; Event-day weather (Open-Meteo API)</div>
+        <div class="panel-body">
+          @if (weatherError()) {
+            <div class="alert alert-warning mb-0">
+              <span class="alert-icon" aria-hidden="true">&#9432;</span>
+              <span>{{ weatherError() }}</span>
+            </div>
+          } @else if (!weather()) {
+            <div class="loading-block"><div class="spinner" role="status"></div><p>Fetching forecast…</p></div>
+          } @else {
+            <p class="text-muted text-small">
+              {{ weather()!.location.label || 'Northern Rivers, NSW' }} &middot;
+              latitude {{ weather()!.location.latitude }}, longitude {{ weather()!.location.longitude }}
+            </p>
+
+            <div class="weather-strip">
+              @for (day of weather()!.forecast; track day.date) {
+                <div class="weather-day">
+                  <div class="weather-day-name">{{ day.day }}</div>
+                  <div class="weather-temp">{{ day.tempMax }}&deg; / {{ day.tempMin }}&deg;</div>
+                  <div class="weather-desc">{{ day.description }}</div>
+                  <div class="weather-extra">&#9730; {{ day.rainChance }}% &middot; &#128168; {{ day.windMax }} km/h</div>
+                </div>
+              }
+            </div>
+
+            <p class="text-small text-muted mb-0" style="margin-top: .9rem">
+              Source: {{ weather()!.source }} &middot; timezone {{ weather()!.location.timezone }}
+            </p>
+          }
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">&#128161; How the platform works</div>
+        <div class="panel-body">
+          <ol style="padding-left: 1.2rem; margin: 0">
+            <li>Search or browse the charity events listed on this site.</li>
+            <li>Open an event to see its details and everyone who has already registered.</li>
+            <li>Choose how many tickets you need and complete the registration form.</li>
+            <li>Your booking is stored in our MySQL database through our REST API.</li>
+          </ol>
+          <hr class="divider" />
+          <p class="text-small text-muted mb-0">
+            This website is a dynamic single-page application: every list, detail view and
+            confirmation you see is fetched from the Charity Events REST API — no page content
+            is hard-coded in the HTML.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

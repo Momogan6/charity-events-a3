@@ -1,0 +1,48 @@
+<article class="event-card">
+  <div class="event-card-banner">
+    <span class="event-card-date">{{ shortDate() }}</span>
+    <span class="badge badge-category">{{ event().category_name }}</span>
+  </div>
+
+  <div class="event-card-body">
+    <h3>
+      <a [routerLink]="['/events', event().event_id]">{{ event().event_name }}</a>
+    </h3>
+
+    <p class="event-card-meta">
+      <span>&#128205; {{ event().event_city || 'Location TBC' }}</span>
+      <span>&#128197; {{ dateLabel() }}</span>
+    </p>
+
+    @if (summary()) {
+      <p class="event-card-desc">{{ summary() }}</p>
+    }
+
+    <div class="stack" style="gap: .35rem">
+      <div class="meter" role="img" [attr.aria-label]="progress() + '% of seats booked'">
+        <span [style.width.%]="progress()"></span>
+      </div>
+      <span class="text-small text-muted">
+        {{ event().tickets_sold }} of {{ event().event_capacity }} seats booked &middot;
+        {{ event().seats_remaining }} remaining
+      </span>
+    </div>
+
+    <div class="event-card-foot">
+      <span class="price">{{ priceLabel() }}</span>
+      <span [class]="statusClass()">{{ event().event_status }}</span>
+    </div>
+  </div>
+
+  <div class="event-card-actions">
+    <a class="btn btn-secondary btn-sm" [routerLink]="['/events', event().event_id]">View details</a>
+
+    @if (isActive() && !soldOut()) {
+      <a class="btn btn-sm" [routerLink]="['/events', event().event_id, 'register']">Register</a>
+    } @else if (soldOut()) {
+      <span class="btn btn-secondary btn-sm" aria-disabled="true">Sold out</span>
+    } @else {
+      <span class="btn btn-secondary btn-sm" aria-disabled="true">{{ event().event_status }}</span>
+    }
+  </div>
+</article>

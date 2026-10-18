@@ -1,0 +1,7 @@
+/* Home-page-specific tweaks only; the design system lives in styles.css. */
+
+.stats { margin-top: -2.25rem; position: relative; z-index: 2; }
+
+@media (max-width: 640px) {
+  .stats { margin-top: 0; }
+}
