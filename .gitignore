@@ -1,0 +1,38 @@
+# ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
+node_modules/
+
+# ---------------------------------------------------------------------------
+# Angular build output and cache
+# ---------------------------------------------------------------------------
+dist/
+.angular/
+out-tsc/
+tmp/
+
+# ---------------------------------------------------------------------------
+# Environment files - never commit real credentials
+# ---------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+
+# ---------------------------------------------------------------------------
+# Local submission staging and helper scripts
+#
+# submission/ holds the generated zip archives (duplicates of this source) and
+# the peer evaluation forms, which are confidential and go to the tutor by
+# email rather than into the repository.
+# _scripts/ holds local launchers that contain machine-specific absolute paths.
+# ---------------------------------------------------------------------------
+submission/
+_scripts/
+
+# ---------------------------------------------------------------------------
+# OS and editor noise
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
