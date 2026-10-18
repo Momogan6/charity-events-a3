@@ -17,6 +17,21 @@ The system lets members of the public browse charity events, search and filter t
 
 ---
 
+## Live deployment (SCU cPanel)
+
+Both websites and the REST API are deployed and running on the SCU cPanel:
+
+| Component | URL |
+|---|---|
+| Client website | https://24832009.it.scu.edu.au/ |
+| Admin console | https://24832009.it.scu.edu.au/admin/ |
+| REST API | https://24832009.it.scu.edu.au/api |
+| API health check | https://24832009.it.scu.edu.au/api/health |
+
+The API runs as a Node.js application behind Phusion Passenger with `PassengerBaseURI /api`, so the front-ends reach it through the site-relative base URL `/api` — no hard-coded hostnames and no CORS configuration needed.
+
+---
+
 ## Technology stack
 
 | Layer | Technology |

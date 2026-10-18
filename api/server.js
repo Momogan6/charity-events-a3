@@ -139,8 +139,11 @@ async function start() {
   });
 }
 
-// Only auto-start when run directly, so the app can be imported by tests.
-if (require.main === module) {
+// Start the server. Phusion Passenger (used by the SCU cPanel) loads this
+// file with require(), so `require.main === module` is FALSE there and a
+// guard based on it would leave the process listening on nothing. The server
+// therefore starts unless a test explicitly opts out.
+if (process.env.CHARITY_EVENTS_NO_AUTOSTART !== '1') {
   start();
 }
 
