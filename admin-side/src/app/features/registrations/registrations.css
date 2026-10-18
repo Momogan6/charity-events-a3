@@ -1,0 +1,24 @@
+/* Registrations console page. */
+
+.panel-head.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.panel-foot {
+  padding: .7rem 1.25rem;
+  border-top: 1px solid var(--c-line);
+  background: var(--c-bg-alt);
+  font-size: .82rem;
+  color: var(--c-muted);
+}
+
+code {
+  background: var(--c-bg-alt);
+  padding: .1rem .3rem;
+  border-radius: 4px;
+  font-size: .84em;
+}

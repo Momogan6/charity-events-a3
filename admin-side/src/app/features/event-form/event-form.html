@@ -1,0 +1,424 @@
+<div class="page">
+  <div class="container">
+
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a routerLink="/dashboard">Dashboard</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{{ isEdit ? 'Update event' : 'Create event' }}</span>
+    </nav>
+
+    <div class="page-header">
+      <h1>{{ isEdit ? 'Update charity event' : 'Create a new charity event' }}</h1>
+      <p>
+        @if (isEdit) {
+          Change any of the details below and save. Capacity cannot be reduced below the number of
+          tickets already sold, and the associated registrations are listed further down the page.
+        } @else {
+          Fill in the details of the new event. The form validates every required field before
+          sending a <code>POST /api/events</code> request.
+        }
+      </p>
+    </div>
+
+    <!-- ================= success ================= -->
+    @if (successMessage()) {
+      <div class="alert alert-success" role="status">
+        <span class="alert-icon" aria-hidden="true">&#10003;</span>
+        <div>
+          <strong>Saved</strong>
+          <p class="mb-0">{{ successMessage() }}</p>
+        </div>
+        <a class="btn btn-secondary btn-sm" style="margin-left: auto" routerLink="/dashboard">
+          Back to dashboard
+        </a>
+      </div>
+    }
+
+    <!-- ================= load problems ================= -->
+    @if (loading()) {
+      <div class="loading-block">
+        <div class="spinner" role="status" aria-label="Loading event"></div>
+        <p>Loading the event from the API…</p>
+      </div>
+    } @else if (loadError()) {
+      <div class="alert alert-error" role="alert">
+        <span class="alert-icon" aria-hidden="true">&#9888;</span>
+        <div>
+          <strong>This event could not be loaded</strong>
+          <p class="mb-0">{{ loadError() }}</p>
+          <a class="btn btn-secondary btn-sm" style="margin-top: .6rem" routerLink="/dashboard">Back to dashboard</a>
+        </div>
+      </div>
+    } @else {
+
+      <div class="admin-columns">
+        <!-- ================= the form ================= -->
+        <section class="panel">
+          <div class="panel-head">{{ isEdit ? '&#9998; Edit event details' : '&#10133; New event details' }}</div>
+          <div class="panel-body">
+
+            <!-- client-side validation summary -->
+            @if (submitAttempted() && invalidFieldLabels().length > 0) {
+              <div class="alert alert-error" role="alert">
+                <span class="alert-icon" aria-hidden="true">&#9888;</span>
+                <div>
+                  <strong>Please complete the following required fields:</strong>
+                  <ul>
+                    @for (label of invalidFieldLabels(); track label) {
+                      <li>{{ label }}</li>
+                    }
+                  </ul>
+                </div>
+              </div>
+            }
+
+            <!-- cross-field validation summary -->
+            @if (coordinatesError()) {
+              <div class="alert alert-warning" role="alert">
+                <span class="alert-icon" aria-hidden="true">&#9432;</span>
+                <span>{{ coordinatesError() }}</span>
+              </div>
+            }
+
+            @if (capacityError()) {
+              <div class="alert alert-warning" role="alert">
+                <span class="alert-icon" aria-hidden="true">&#9432;</span>
+                <span>{{ capacityError() }}</span>
+              </div>
+            }
+
+            <!-- server-side rejection -->
+            @if (serverError()) {
+              <div class="alert alert-error" role="alert">
+                <span class="alert-icon" aria-hidden="true">&#10060;</span>
+                <div>
+                  <strong>The API rejected this request</strong>
+                  <p class="mb-0">{{ serverError() }}</p>
+                </div>
+              </div>
+            }
+
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+              <fieldset>
+                <legend>Event details</legend>
+                <div class="form-grid">
+                  <div class="field field-full">
+                    <label for="e-name">Event name <span class="required-mark">*</span></label>
+                    <input
+                      id="e-name"
+                      type="text"
+                      formControlName="event_name"
+                      maxlength="150"
+                      placeholder="e.g. Charity Fun Run 2027"
+                      [attr.aria-invalid]="showError('event_name') ? 'true' : null" />
+                    @if (showError('event_name')) {
+                      <span class="field-error" role="alert">{{ errorFor('event_name') }}</span>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label for="e-category">Category <span class="required-mark">*</span></label>
+                    <select
+                      id="e-category"
+                      formControlName="category_id"
+                      [attr.aria-invalid]="showError('category_id') ? 'true' : null">
+                      <option value="">Select a category…</option>
+                      @for (category of categories(); track category.category_id) {
+                        <option [value]="category.category_id">{{ category.category_name }}</option>
+                      }
+                    </select>
+                    @if (showError('category_id')) {
+                      <span class="field-error" role="alert">{{ errorFor('category_id') }}</span>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label for="e-status">Status <span class="required-mark">*</span></label>
+                    <select id="e-status" formControlName="event_status">
+                      @for (status of statuses; track status) {
+                        <option [value]="status">{{ status }}</option>
+                      }
+                    </select>
+                    <span class="field-hint">Only <strong>Active</strong> events accept new registrations.</span>
+                  </div>
+
+                  <div class="field field-full">
+                    <label for="e-description">Description <span class="label-optional">(optional)</span></label>
+                    <textarea
+                      id="e-description"
+                      formControlName="event_description"
+                      maxlength="5000"
+                      placeholder="What is the event, who does it support, and what should attendees expect?"></textarea>
+                    @if (showError('event_description')) {
+                      <span class="field-error" role="alert">{{ errorFor('event_description') }}</span>
+                    }
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset style="margin-top: 1.1rem">
+                <legend>Location</legend>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="e-venue">Venue <span class="label-optional">(optional)</span></label>
+                    <input id="e-venue" type="text" formControlName="event_venue" maxlength="200" placeholder="e.g. Riverside Park" />
+                    @if (showError('event_venue')) {
+                      <span class="field-error" role="alert">{{ errorFor('event_venue') }}</span>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label for="e-city">City <span class="label-optional">(optional)</span></label>
+                    <input id="e-city" type="text" formControlName="event_city" maxlength="80" placeholder="e.g. Lismore" />
+                    @if (showError('event_city')) {
+                      <span class="field-error" role="alert">{{ errorFor('event_city') }}</span>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label for="e-lat">Latitude <span class="label-optional">(optional)</span></label>
+                    <input
+                      id="e-lat"
+                      type="number"
+                      step="0.000001"
+                      formControlName="latitude"
+                      placeholder="-28.813300"
+                      [attr.aria-invalid]="coordinatesError() ? 'true' : null" />
+                    @if (showError('latitude')) {
+                      <span class="field-error" role="alert">{{ errorFor('latitude') }}</span>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label for="e-lng">Longitude <span class="label-optional">(optional)</span></label>
+                    <input
+                      id="e-lng"
+                      type="number"
+                      step="0.000001"
+                      formControlName="longitude"
+                      placeholder="153.277800"
+                      [attr.aria-invalid]="coordinatesError() ? 'true' : null" />
+                    @if (showError('longitude')) {
+                      <span class="field-error" role="alert">{{ errorFor('longitude') }}</span>
+                    }
+                    <span class="field-hint">
+                      Both are required together — they drive the Open-Meteo forecast on the client website.
+                    </span>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset style="margin-top: 1.1rem">
+                <legend>Schedule, capacity and pricing</legend>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="e-date">Event date <span class="required-mark">*</span></label>
+                    <input
+                      id="e-date"
+                      type="date"
+                      formControlName="event_date"
+                      [attr.aria-invalid]="showError('event_date') ? 'true' : null" />
+                    @if (showError('event_date')) {
+                      <span class="field-error" role="alert">{{ errorFor('event_date') }}</span>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label for="e-time">Start time <span class="label-optional">(optional)</span></label>
+                    <input id="e-time" type="time" formControlName="event_time" />
+                    @if (showError('event_time')) {
+                      <span class="field-error" role="alert">{{ errorFor('event_time') }}</span>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label for="e-capacity">Capacity (seats) <span class="required-mark">*</span></label>
+                    <input
+                      id="e-capacity"
+                      type="number"
+                      min="0"
+                      formControlName="event_capacity"
+                      [attr.aria-invalid]="capacityError() || showError('event_capacity') ? 'true' : null" />
+                    @if (showError('event_capacity')) {
+                      <span class="field-error" role="alert">{{ errorFor('event_capacity') }}</span>
+                    } @else if (isEdit) {
+                      <span class="field-hint">
+                        {{ ticketsSold() }} ticket(s) already sold — capacity must be at least that.
+                      </span>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label for="e-price">Ticket price (AUD) <span class="required-mark">*</span></label>
+                    <input
+                      id="e-price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      formControlName="ticket_price"
+                      [attr.aria-invalid]="showError('ticket_price') ? 'true' : null" />
+                    @if (showError('ticket_price')) {
+                      <span class="field-error" role="alert">{{ errorFor('ticket_price') }}</span>
+                    } @else {
+                      <span class="field-hint">Enter 0.00 for a free event.</span>
+                    }
+                  </div>
+                </div>
+              </fieldset>
+
+              <div class="form-actions">
+                <button class="btn btn-lg" type="submit" [disabled]="saving()">
+                  @if (saving()) {
+                    Saving…
+                  } @else if (isEdit) {
+                    Save changes
+                  } @else {
+                    Create event
+                  }
+                </button>
+
+                @if (isEdit) {
+                  <button class="btn btn-secondary btn-lg" type="button" [disabled]="saving()" (click)="resetToLoadedValues()">
+                    Undo edits
+                  </button>
+                  <button class="btn btn-secondary btn-lg" type="button" [disabled]="saving()" (click)="reload()">
+                    Reload from database
+                  </button>
+                }
+
+                <a class="btn btn-ghost btn-lg" routerLink="/dashboard">Cancel</a>
+              </div>
+
+              <p class="text-small text-muted" style="margin: .9rem 0 0">
+                @if (isEdit) {
+                  Saving sends <code>PUT /api/events/{{ eventId() }}</code>.
+                } @else {
+                  Saving sends <code>POST /api/events</code> and the API replies with HTTP 201 and the new event ID.
+                }
+              </p>
+            </form>
+          </div>
+        </section>
+
+        <!-- ================= side panels ================= -->
+        <aside class="stack-lg">
+          @if (isEdit && event(); as e) {
+            <section class="panel">
+              <div class="panel-head">&#128202; Current record</div>
+              <div class="panel-body">
+                <dl class="fact-grid" style="grid-template-columns: 1fr 1fr">
+                  <div>
+                    <dt>Event ID</dt>
+                    <dd>#{{ e.event_id }}</dd>
+                  </div>
+                  <div>
+                    <dt>Status</dt>
+                    <dd><span [class]="statusClass(e.event_status)">{{ e.event_status }}</span></dd>
+                  </div>
+                  <div>
+                    <dt>Date</dt>
+                    <dd>{{ fmtDate(e.event_date) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Price</dt>
+                    <dd>{{ fmtPrice(e.ticket_price) }}</dd>
+                  </div>
+                  <div>
+                    <dt>Tickets sold</dt>
+                    <dd>{{ e.tickets_sold }} / {{ e.event_capacity }}</dd>
+                  </div>
+                  <div>
+                    <dt>Seats left</dt>
+                    <dd>{{ e.seats_remaining }}</dd>
+                  </div>
+                </dl>
+
+                <hr class="divider" />
+
+                <label class="text-small text-muted" for="e-id-readonly">Immutable identifier</label>
+                <div class="readonly-value" id="e-id-readonly">
+                  event_id = {{ e.event_id }} (primary key, never edited)
+                </div>
+              </div>
+            </section>
+          }
+
+          @if (!isEdit) {
+            <section class="panel">
+              <div class="panel-head">&#128161; Creating a good event record</div>
+              <div class="panel-body">
+                <ul style="padding-left: 1.1rem; margin: 0">
+                  <li>Give the event a descriptive name — it is what clients search on.</li>
+                  <li>Only <strong>Active</strong> events appear as open for registration.</li>
+                  <li>Provide latitude and longitude so the client website can show a weather forecast.</li>
+                  <li>Capacity is enforced by a database trigger, so the event can never be over-booked.</li>
+                  <li>Set the price to 0.00 for a free community event.</li>
+                </ul>
+              </div>
+            </section>
+          }
+        </aside>
+      </div>
+
+      <!-- ================= registrations for this event ================= -->
+      @if (isEdit) {
+        <section class="panel" style="margin-top: 1.5rem">
+          <div class="panel-head row-between">
+            <span>&#128101; Registrations for this event ({{ registrations().length }})</span>
+            <span class="text-small text-muted">
+              {{ ticketsSold() }} ticket(s) &middot; block deletion while any exist
+            </span>
+          </div>
+
+          @if (registrations().length === 0) {
+            <div class="panel-body">
+              <div class="empty-state" style="padding: 2rem 1rem">
+                <h3>No registrations yet</h3>
+                <p class="mb-0">
+                  This event is safe to delete — but note that the client website will stop showing it
+                  immediately.
+                </p>
+              </div>
+            </div>
+          } @else {
+            <div class="table-wrap">
+              <table>
+                <caption class="visually-hidden">Registrations recorded for this event</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Ref</th>
+                    <th scope="col">Registered</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Phone</th>
+                    <th scope="col" class="num">Tickets</th>
+                    <th scope="col" class="num">Amount</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (registration of registrations(); track registration.registration_id) {
+                    <tr>
+                      <td class="text-muted">#{{ registration.registration_id }}</td>
+                      <td>{{ fmtDateTime(registration.registration_date) }}</td>
+                      <td class="cell-strong">{{ registration.full_name }}</td>
+                      <td>{{ registration.email }}</td>
+                      <td>{{ registration.phone }}</td>
+                      <td class="num">{{ registration.tickets_purchased }}</td>
+                      <td class="num">{{ fmtMoney(registration.total_amount) }}</td>
+                      <td class="text-muted">{{ registration.notes || '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="panel-foot">
+              While registrations exist, <code>DELETE /api/events/{{ eventId() }}</code> is refused with
+              HTTP 409. Change the status to <strong>Suspended</strong> instead of deleting.
+            </div>
+          }
+        </section>
+      }
+    }
+  </div>
+</div>

@@ -1,0 +1,22 @@
+/* Dashboard specific rules (design system lives in src/styles.css). */
+
+.panel-foot {
+  padding: .7rem 1.25rem;
+  border-top: 1px solid var(--c-line);
+  background: var(--c-bg-alt);
+  font-size: .82rem;
+  color: var(--c-muted);
+}
+
+.panel-head.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+table td.num,
+table th.num {
+  white-space: nowrap;
+}

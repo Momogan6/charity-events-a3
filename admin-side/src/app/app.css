@@ -1,0 +1,38 @@
+/* Root component of the admin console. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1 1 auto;
+}
+
+.console-footer {
+  background: #111827;
+  color: #9ca3af;
+  padding: 1.25rem 0;
+  font-size: .82rem;
+}
+
+.console-footer p {
+  max-width: 90ch;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: .6rem 1rem;
+  background: var(--c-admin);
+  color: #fff;
+  border-radius: 0 0 var(--radius-sm) 0;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  left: 0;
+}

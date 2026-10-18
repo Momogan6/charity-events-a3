@@ -1,0 +1,54 @@
+/* Event form page (shared by the create and update routes). */
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.4rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--c-line);
+}
+
+.panel-head.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.panel-foot {
+  padding: .7rem 1.25rem;
+  border-top: 1px solid var(--c-line);
+  background: var(--c-bg-alt);
+  font-size: .82rem;
+  color: var(--c-muted);
+}
+
+.fact-grid {
+  display: grid;
+  gap: .9rem 1.2rem;
+  margin: 0;
+}
+
+.fact-grid dt {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--c-muted);
+  font-weight: 700;
+  margin-bottom: .1rem;
+}
+
+.fact-grid dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: .9rem;
+}
+
+code {
+  background: var(--c-bg-alt);
+  padding: .1rem .3rem;
+  border-radius: 4px;
+  font-size: .84em;
+}

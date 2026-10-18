@@ -1,0 +1,266 @@
+<div class="page">
+  <div class="container">
+
+    <div class="page-header">
+      <h1>Event dashboard</h1>
+      <p>
+        Every charity event in the database, regardless of status. From here you can create new
+        events, update existing ones, or delete an event — deletions are refused while an event
+        still has registrations.
+      </p>
+    </div>
+
+    <!-- ================= feedback ================= -->
+    @if (feedback(); as note) {
+      <div class="alert" [class]="note.type === 'success' ? 'alert alert-success' : 'alert alert-error'" role="alert">
+        <span class="alert-icon" aria-hidden="true">{{ note.type === 'success' ? '✓' : '⚠' }}</span>
+        <div>
+          <strong>{{ note.title }}</strong>
+          <p class="mb-0">{{ note.message }}</p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" style="margin-left: auto" (click)="dismissFeedback()">
+          Dismiss
+        </button>
+      </div>
+    }
+
+    <!-- ================= delete confirmation ================= -->
+    @if (pendingDelete(); as target) {
+      <div class="confirm-inline" role="alertdialog" aria-labelledby="confirm-title">
+        <h3 id="confirm-title">Delete "{{ target.event_name }}"?</h3>
+        <p>
+          Event ID {{ target.event_id }} &middot; {{ fmtDate(target.event_date) }} &middot;
+          {{ target.registration_count }} registration(s) currently recorded.
+        </p>
+        <p>
+          The API will only allow this deletion when the event has <strong>no</strong> registrations.
+          If registrations exist the request is rejected with a clear error message and nothing is
+          deleted.
+        </p>
+        <div class="row">
+          <button class="btn btn-danger" type="button" [disabled]="deleting()" (click)="confirmDelete()">
+            @if (deleting()) { Deleting… } @else { Yes, delete this event }
+          </button>
+          <button class="btn btn-secondary" type="button" [disabled]="deleting()" (click)="cancelDelete()">
+            Cancel
+          </button>
+        </div>
+
+        @if (target.registration_count > 0) {
+          <div class="alert alert-warning" style="margin: .9rem 0 0" role="status">
+            <span class="alert-icon" aria-hidden="true">&#9432;</span>
+            <div>
+              <strong>This event already has {{ target.registration_count }} registration(s)</strong>
+              <p class="mb-0">
+                The API is expected to reject this request with HTTP 409 and no rows will be removed.
+                You may still try it to see the integrity rule in action — or suspend the event instead.
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ================= KPI strip ================= -->
+    <section class="kpi-row" aria-label="Summary figures">
+      <div class="kpi">
+        <div class="kpi-value">{{ kpi().total }}</div>
+        <div class="kpi-label">Total events</div>
+      </div>
+      <div class="kpi kpi-success">
+        <div class="kpi-value">{{ kpi().active }}</div>
+        <div class="kpi-label">Active</div>
+      </div>
+      <div class="kpi kpi-warning">
+        <div class="kpi-value">{{ kpi().suspended }}</div>
+        <div class="kpi-label">Suspended</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-value">{{ kpi().past }}</div>
+        <div class="kpi-label">Past</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-value">{{ kpi().ticketsSold }}</div>
+        <div class="kpi-label">Tickets sold</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-value">{{ kpi().registrations }}</div>
+        <div class="kpi-label">Registrations</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-value">{{ fmtMoney(kpi().revenue) }}</div>
+        <div class="kpi-label">Ticket value</div>
+      </div>
+    </section>
+
+    <!-- ================= toolbar ================= -->
+    <section class="panel" style="margin-top: 1.5rem">
+      <div class="panel-head row-between">
+        <span>&#128269; Filter the event list</span>
+        <a class="btn btn-sm" routerLink="/events/new">+ Create a new event</a>
+      </div>
+      <div class="panel-body">
+        <form class="toolbar" [formGroup]="filters" (ngSubmit)="applyFilters()">
+          <div class="field">
+            <label for="d-search">Keyword</label>
+            <input id="d-search" type="search" formControlName="search" placeholder="Name, city or venue" />
+          </div>
+
+          <div class="field">
+            <label for="d-status">Status</label>
+            <select id="d-status" formControlName="status">
+              <option value="">All statuses</option>
+              <option value="Active">Active</option>
+              <option value="Past">Past</option>
+              <option value="Suspended">Suspended</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="d-category">Category</label>
+            <select id="d-category" formControlName="categoryId">
+              <option value="">All categories</option>
+              @for (category of categories(); track category.category_id) {
+                <option [value]="category.category_id">{{ category.category_name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="d-sort">Sort by</label>
+            <select id="d-sort" formControlName="sort">
+              <option value="date">Event date</option>
+              <option value="name">Event name</option>
+              <option value="price">Ticket price</option>
+              <option value="capacity">Capacity</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="d-order">Direction</label>
+            <select id="d-order" formControlName="order">
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="d-apply">&nbsp;</label>
+            <button id="d-apply" class="btn" type="submit" [disabled]="loading()">Apply</button>
+          </div>
+
+          <div class="field">
+            <label for="d-clear">&nbsp;</label>
+            <button id="d-clear" class="btn btn-secondary" type="button" [disabled]="loading()" (click)="clearFilters()">
+              Clear
+            </button>
+          </div>
+        </form>
+
+        <div class="legend" style="margin-top: 1rem">
+          <span><i class="dot-active"></i> Active — open for registration</span>
+          <span><i class="dot-past"></i> Past — event date has passed</span>
+          <span><i class="dot-suspended"></i> Suspended — temporarily closed</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= event table ================= -->
+    <section class="panel" style="margin-top: 1.5rem">
+      <div class="panel-head row-between">
+        <span>&#128203; All events ({{ events().length }})</span>
+        <button class="btn btn-secondary btn-sm" type="button" (click)="loadEvents()" [disabled]="loading()">
+          &#8635; Reload
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="panel-body">
+          <div class="alert alert-error mb-0" role="alert">
+            <span class="alert-icon" aria-hidden="true">&#9888;</span>
+            <div>
+              <strong>The event list could not be loaded</strong>
+              <p class="mb-0">{{ errorMessage() }}</p>
+            </div>
+          </div>
+        </div>
+      } @else if (loading()) {
+        <div class="loading-block">
+          <div class="spinner" role="status" aria-label="Loading events"></div>
+          <p>Loading events from the API…</p>
+        </div>
+      } @else if (events().length === 0) {
+        <div class="panel-body">
+          <div class="empty-state">
+            <h3>No events match the current filters</h3>
+            <p>Adjust the filters above, or create a new event.</p>
+            <a class="btn" routerLink="/events/new">Create a new event</a>
+          </div>
+        </div>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">All charity events with administrative actions</caption>
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Event</th>
+                <th scope="col">Category</th>
+                <th scope="col">Date</th>
+                <th scope="col">City</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="num">Price</th>
+                <th scope="col" class="num">Sold</th>
+                <th scope="col" class="num">Left</th>
+                <th scope="col" class="num">Regs</th>
+                <th scope="col" class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (event of events(); track event.event_id) {
+                <tr>
+                  <td class="text-muted">{{ event.event_id }}</td>
+                  <td class="cell-strong">{{ event.event_name }}</td>
+                  <td><span class="badge badge-category">{{ event.category_name }}</span></td>
+                  <td>{{ fmtDate(event.event_date) }}</td>
+                  <td>{{ event.event_city || '—' }}</td>
+                  <td><span [class]="statusClass(event.event_status)">{{ event.event_status }}</span></td>
+                  <td class="num">{{ fmtPrice(event.ticket_price) }}</td>
+                  <td class="num">{{ event.tickets_sold }}</td>
+                  <td class="num">{{ event.seats_remaining }}</td>
+                  <td class="num">{{ event.registration_count }}</td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-secondary btn-sm" type="button" (click)="goToEdit(event)">Edit</button>
+                      <!-- Deliberately NOT disabled when registrations exist: the marker
+                           must be able to see the API refuse the delete and the console
+                           report it. The confirmation block warns first. -->
+                      <button
+                        class="btn btn-danger btn-sm"
+                        type="button"
+                        [attr.title]="event.registration_count > 0
+                          ? 'This event has registrations - the API will refuse the delete'
+                          : 'Delete this event'"
+                        (click)="startDelete(event)">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (suspendedWithBookings() > 0) {
+          <div class="panel-foot">
+            Note: {{ suspendedWithBookings() }} non-active event(s) still hold registrations. Deleting
+            them is refused by the API (HTTP 409) because the database enforces
+            <code>ON DELETE RESTRICT</code> on the registration foreign key — suspending the event is
+            the correct way to close it instead.
+          </div>
+        }
+      }
+    </section>
+  </div>
+</div>

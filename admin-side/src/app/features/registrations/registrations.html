@@ -1,0 +1,165 @@
+<div class="page">
+  <div class="container">
+
+    <div class="page-header">
+      <h1>Registrations</h1>
+      <p>
+        Every booking recorded through the client website. Use the event filter to narrow the list, or
+        cancel a booking to free up seats — and, if it was the last booking, to make the event
+        deletable again.
+      </p>
+    </div>
+
+    @if (feedback(); as note) {
+      <div class="alert" [class]="note.type === 'success' ? 'alert alert-success' : 'alert alert-error'" role="alert">
+        <span class="alert-icon" aria-hidden="true">{{ note.type === 'success' ? '✓' : '⚠' }}</span>
+        <span>{{ note.message }}</span>
+        <button type="button" class="btn btn-secondary btn-sm" style="margin-left: auto" (click)="dismissFeedback()">
+          Dismiss
+        </button>
+      </div>
+    }
+
+    <section class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-value">{{ summary().count }}</div>
+        <div class="kpi-label">Registrations listed</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-value">{{ summary().tickets }}</div>
+        <div class="kpi-label">Tickets</div>
+      </div>
+      <div class="kpi kpi-success">
+        <div class="kpi-value">{{ fmtMoney(summary().value) }}</div>
+        <div class="kpi-label">Total value</div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 1.5rem">
+      <div class="panel-head">&#128269; Filter registrations</div>
+      <div class="panel-body">
+        <form class="toolbar" [formGroup]="filters" (ngSubmit)="applyFilter()">
+          <div class="field">
+            <label for="reg-event">Event</label>
+            <select id="reg-event" formControlName="eventId">
+              <option value="">All events</option>
+              @for (event of events(); track event.event_id) {
+                <option [value]="event.event_id">
+                  #{{ event.event_id }} — {{ event.event_name }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="reg-search">Name, email or phone</label>
+            <input id="reg-search" type="search" formControlName="search" placeholder="Filter the visible rows" />
+          </div>
+
+          <div class="field">
+            <label for="reg-apply">&nbsp;</label>
+            <button id="reg-apply" class="btn" type="submit" [disabled]="loading()">Apply</button>
+          </div>
+
+          <div class="field">
+            <label for="reg-clear">&nbsp;</label>
+            <button id="reg-clear" class="btn btn-secondary" type="button" [disabled]="loading()" (click)="clearFilter()">
+              Clear
+            </button>
+          </div>
+        </form>
+        <p class="field-hint" style="margin: .8rem 0 0">
+          The event filter is applied by the API (<code>GET /api/registrations?eventId=</code>); the
+          text filter narrows the rows already returned.
+        </p>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 1.5rem">
+      <div class="panel-head row-between">
+        <span>&#128203; Booking list ({{ visible().length }})</span>
+        <button class="btn btn-secondary btn-sm" type="button" (click)="loadRegistrations()" [disabled]="loading()">
+          &#8635; Reload
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="panel-body">
+          <div class="alert alert-error mb-0" role="alert">
+            <span class="alert-icon" aria-hidden="true">&#9888;</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        </div>
+      } @else if (loading()) {
+        <div class="loading-block">
+          <div class="spinner" role="status" aria-label="Loading registrations"></div>
+          <p>Loading registrations…</p>
+        </div>
+      } @else if (visible().length === 0) {
+        <div class="panel-body">
+          <div class="empty-state">
+            <h3>No registrations found</h3>
+            <p class="mb-0">Try a different event, or clear the filters.</p>
+          </div>
+        </div>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">All registrations with cancel actions</caption>
+            <thead>
+              <tr>
+                <th scope="col">Ref</th>
+                <th scope="col">Event</th>
+                <th scope="col">Registered</th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Phone</th>
+                <th scope="col" class="num">Tickets</th>
+                <th scope="col" class="num">Amount</th>
+                <th scope="col" class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (registration of visible(); track registration.registration_id) {
+                <tr>
+                  <td class="text-muted">#{{ registration.registration_id }}</td>
+                  <td>{{ registration.event_name || ('Event ' + registration.event_id) }}</td>
+                  <td>{{ fmtDateTime(registration.registration_date) }}</td>
+                  <td class="cell-strong">{{ registration.full_name }}</td>
+                  <td>{{ registration.email }}</td>
+                  <td>{{ registration.phone }}</td>
+                  <td class="num">{{ registration.tickets_purchased }}</td>
+                  <td class="num">{{ fmtMoney(registration.total_amount) }}</td>
+                  <td>
+                    <div class="table-actions">
+                      @if (pendingCancelId() === registration.registration_id) {
+                        <button
+                          class="btn btn-danger btn-sm"
+                          type="button"
+                          [disabled]="cancelling()"
+                          (click)="confirmCancel(registration.registration_id)">
+                          @if (cancelling()) { Cancelling… } @else { Confirm }
+                        </button>
+                        <button class="btn btn-secondary btn-sm" type="button" [disabled]="cancelling()" (click)="askCancel(registration.registration_id)">
+                          No
+                        </button>
+                      } @else {
+                        <button class="btn btn-secondary btn-sm" type="button" (click)="askCancel(registration.registration_id)">
+                          Cancel booking
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="panel-foot">
+          Newest booking first — the API orders by <code>registration_date DESC</code>. Cancelling a
+          booking sends <code>DELETE /api/registrations/:id</code>.
+        </div>
+      }
+    </section>
+  </div>
+</div>
